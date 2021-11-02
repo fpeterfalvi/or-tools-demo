@@ -1,2 +1,6 @@
 # Project exclude paths
 /target/
+/.idea/
+/credentials.properties
+/demo.lp
+/demo.slx

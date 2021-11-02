@@ -4,12 +4,10 @@ import com.google.ortools.linearsolver.MPObjective;
 import com.google.ortools.linearsolver.MPSolver;
 import com.google.ortools.linearsolver.MPVariable;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class MaximumMatching {
     private int M;
@@ -48,7 +46,7 @@ public class MaximumMatching {
         reader.close();
     }
 
-    public boolean createModel(boolean solve) {
+    public boolean createModel(boolean solve, String modelFileName) {
         String solverName = "SCIP";
         //String solverName = "CBC";
         MPSolver solver = MPSolver.createSolver(solverName);
@@ -85,7 +83,18 @@ public class MaximumMatching {
         }
         objective.setMaximization();
 
+        if (modelFileName != null) {
+            try {
+                BufferedWriter writer = new BufferedWriter(new FileWriter(modelFileName));
+                writer.write(solver.exportModelAsLpFormat());
+                writer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
         if (solve) {
+            solver.setTimeLimit(10000L);
             final MPSolver.ResultStatus resultStatus = solver.solve();
 
             if (resultStatus == MPSolver.ResultStatus.OPTIMAL) {
@@ -95,6 +104,7 @@ public class MaximumMatching {
                 System.out.println("Problem solved in " + solver.wallTime() + " milliseconds");
                 System.out.println("Problem solved in " + solver.iterations() + " iterations");
                 System.out.println("Problem solved in " + solver.nodes() + " branch-and-bound nodes");
+                System.out.println();
 
                 maximumMatching = new ArrayList<>();
                 for (int e = 0; e < E; e++) {
@@ -109,6 +119,25 @@ public class MaximumMatching {
             }
         }
         return false;
+    }
+
+    public void solveWithXpress() {
+        createModel(false, "demo.lp");
+        String command = "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/xpressmp/lib/ && export LD_LIBRARY_PATH && cd /opt/xpressmp/bin && ./optimizer @/home/ferenc.peterfalvi/demoscript.txt";
+        String xpressLog = XpressUtil.makeXpressSSHCommunication(command, "demo.lp", "demo.slx");
+        Map<String, Integer> xpressVariables = XpressUtil.loadVariablesFromSlx("demo.slx");
+        System.out.println(xpressVariables);
+        if (xpressVariables.isEmpty()) {
+            System.out.println("Nincs megengedett megoldás!");
+        } else {
+            maximumMatching = new ArrayList<>();
+            for (int e = 0; e < E; e++) {
+                int val = xpressVariables.get("e" + e);
+                if (val == 1) {
+                    maximumMatching.add(e);
+                }
+            }
+        }
     }
 
     public int[][] getEdges() {

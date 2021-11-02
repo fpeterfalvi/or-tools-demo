@@ -1,7 +1,5 @@
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 public class Main {
 
@@ -11,8 +9,16 @@ public class Main {
         System.out.print("A gráfot tartalmazó fájl neve: ");
         String fileName = scanner.nextLine();
         maximumMatching.readGraph(fileName);
-        maximumMatching.createModel(true);
-
+        System.out.println("SCIP vagy Xpress? (S/X) ");
+        String c = "0";
+        while (!c.equals("s") && !c.equals("S") && !c.equals("x") && !c.equals("X")) {
+            c = scanner.nextLine();
+        }
+        if (c.equals("s") || c.equals("S")) {
+            maximumMatching.createModel(true, null);
+        } else {
+            maximumMatching.solveWithXpress();
+        }
         int[][] edges = maximumMatching.getEdges();
         List<Integer> matching = maximumMatching.getMaximumMatching();
         System.out.println("A maximális párosítás mérete: " + matching.size());
