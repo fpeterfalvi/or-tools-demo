@@ -1,0 +1,3 @@
+readprob /home/ferenc.peterfalvi/demo.lp
+maxim -g
+writeslxsol /home/ferenc.peterfalvi/demo.slx
